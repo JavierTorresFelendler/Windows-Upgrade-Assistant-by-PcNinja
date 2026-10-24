@@ -31,7 +31,8 @@ internal static class CliRunner
         {
             if (CliHelp.TryGetRequestedTopic(args, out var helpTopic))
             {
-                if (args.Length > 2)
+                if (args.Length > 2 && !(args.Length == 3 && helpTopic == "app-update" &&
+                    args[0].Equals("app-update", StringComparison.OrdinalIgnoreCase)))
                     return Fail(InvalidArguments, "Help accepts one topic. Use 'help all' for the complete manual.", false);
                 if (!CliHelp.TryPrint(helpTopic))
                     return Fail(InvalidArguments,
@@ -50,6 +51,8 @@ internal static class CliRunner
                 return Success;
             }
 
+            if (args[0].Equals("app-update", StringComparison.OrdinalIgnoreCase))
+                return await CliAppUpdates.RunAsync(args.Skip(1).ToArray(), cancellation.Token);
             var options = CliOptions.Parse(args);
             if (options.Quiet && !options.Yes && !options.DryRun)
                 return Fail(Cancelled, "Quiet upgrade requires explicit --yes consent. Windows Setup was not started.", options.Json);

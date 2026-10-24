@@ -40,6 +40,7 @@ internal static class DownloadGuidanceChecks
                 throw new Exception("The fixture resolver must be explicitly configured.")));
             Set("_prepareServerCommand", new Func<MountedSource, int, CancellationToken, Task<string>>((_, _, _) =>
                 throw new Exception("The fixture command preparer must be explicitly configured.")));
+            Set("_automaticAppUpdateCheck", false);
             form.Show();
             Application.DoEvents();
             Call("ApplyDownloadSystem", client);

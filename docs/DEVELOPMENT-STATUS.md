@@ -6,7 +6,131 @@ Reusable architecture, diagnosis and verification know-how lives in
 [AI maintenance playbook](AI-MAINTENANCE-PLAYBOOK.md), independently of any
 assistant's personal memory or skills installation.
 
-## RC8 release baseline (owner approved 2026-10-24)
+## Current authorized work: portable Beta update demonstration
+
+The owner approved Beta 1 then Beta 2 testing BEFORE any official release.
+Keep RC8/main and all existing assets unchanged. Continue in Draft PR #13.
+This scope supersedes the Program Files/replacement design below; it does not
+authorize merging, stable/RC9 publication or publishing Beta 2 before Beta 1 is
+opened/tested by the owner.
+
+- Versioned EXEs saved beside the running tool; no original overwrite, old-name
+  rename, numbered copies or Program Files fallback. Private anchored staging
+  stays below that same folder. Existing exact-version files must pass validation.
+- Metadata-only discovery may run at startup. EXE transfer needs explicit GUI
+  **Download and run the new version** consent or CLI **app-update run --yes**.
+  Keep the unreleased install verb only as an alias; no installer is involved.
+- Explicit Beta channel selects only numbered Beta releases; stable/RC selects
+  stable only. Current source version is 1.1.0-beta.1, not a replacement RC8.
+- Offer includes Regular/Critical badge, bounded plain-text publisher message
+  and exact version's GitHub notes link. Critical remains optional, never forced.
+  Release notice is source-controlled in docs/updates/{version}.json.
+- Preparing first Beta prerelease from the exact CI-passed PR commit is authorized.
+  Beta tags may remain unmerged, but require matching successful PR CI; stable/RC
+  still require main ancestry. All publication remains draft/upload/verify-first;
+  Beta never changes stable/latest. No Windows Setup/reboot/live app update on
+  the development machine.
+- Beta 1 is published as an immutable prerelease, tag `v1.1.0-beta.1`, source
+  `1e25bac7f324756ff313a573877f075becab7785`. Release ID `422891503` has exactly
+  four assets. EXE `Windows-Upgrade-Assistant-By-PcNinja-V1.1-Beta1.exe` is
+  73,084,772 bytes, unsigned, SHA-256
+  `ec654f1f3e3b28b947da6d89af2a5d6f0ebd8a76e4e49625cd6fea239a80648f`.
+- Local Core/headless CLI/client GUI/packaging suites pass. PR CI `40117997759`
+  passed including elevated private-workspace and real disposable-byte versioned
+  publish/reuse/no-delete launch-guard tests. These do not execute the app helper.
+- Tag workflow `40118262354` passed source gate/build/tests, then failed its final
+  draft lookup: the tag API hid the draft and draft asset URLs were temporary
+  `untagged-*` URLs. Verified the existing draft ID and every immutable uploaded
+  asset against independently downloaded CI artifact `12569628129`, then published
+  that same release as prerelease/non-latest. No tag or asset was replaced.
+  Publisher-only follow-up uses immutable release-ID checks and permits temporary
+  same-repository URLs only before publication; published/client URLs remain pinned.
+  Offline fixtures cover both behaviors and reject temporary published URLs.
+- Downloaded all four assets again from the public release; exact API sizes,
+  SHA-256 digests, source/product version and actual portable read-only CLI checks
+  pass. Live metadata-only check returns `APP_UPDATE_CURRENT` with setupStarted
+  and readyForRestart false. Stable/latest remains absent (404); RC8/main/tag and
+  RC8 assets are unchanged. A bare uncaptured invocation in the development tool
+  hit an invalid console handle; captured stdout (the test/JSON contract) passes.
+  Investigate that hosting edge case separately; do not claim it fixed here.
+- Remaining acceptance: owner opens Beta 1 on a VM from an ordinary writable local
+  NTFS folder, then authorizes Beta 2 publication for real consent/download/helper/
+  close/relaunch testing. No Beta 2, RC9, stable, main merge, Windows Setup or reboot
+  was performed. The later publisher-only checkpoint does not alter Beta 1 runtime.
+
+## Historical RC8-era updater checkpoint (superseded destination design)
+
+### Current development: application updates (Draft PR #13)
+
+The owner has now authorized updater implementation while continuing non-English
+Windows-upgrade tests. This supersedes the earlier design-only hold for #13,
+not the hold on merging, publishing or changing RC8. Refreshed the existing
+`design/application-updates` branch with reviewed RC8 main; keep one PR/history.
+
+- Shared Core discovers only this project's latest stable GitHub release and
+  same-release manifest. Bounded metadata/redirect/transfer policy, strict release
+  identity, exact size/SHA-256, executable metadata and signed-publisher continuity
+  fail closed. An unsigned release's checksum is not publisher authentication.
+- GUI discovery is nonblocking and separate from Windows-media diagnostics.
+  Installation needs explicit consent; CLI adds documented `app-update`
+  check/status/install commands without OS restart authorization.
+- The successor helper installs a controlled local Program Files portable copy.
+  An original outside that folder remains untouched. Private staging, anchored
+  paths, parent-process-bound READY/GO handoff and recoverable atomic replacement
+  avoid elevated replacement of a user-writable source path. Relaunch has no
+  arguments; CLI installation does not reopen a GUI.
+- A secure machine-wide operation gate serializes app replacement with Core ISO
+  preparation/validation/download/Setup. Repeat external Setup and pending-restart
+  checks before handoff/apply. Historical upgrade records are not permanent locks.
+- Centralized version identity in `Directory.Build.props`; development remains
+  `1.1.0-rc.8` with source-commit provenance, not a newly published RC. Stable
+  packaging is draft-first, verifies all immutable assets, and updates latest last.
+  No stable manifest, tag or feed has been published by this implementation work.
+- Local Release warnings-as-errors Core, headless CLI, client GUI and packaging
+  fixtures pass. Helper request/expiry/path/handshake bounds and actual atomic
+  file move/replace/restore fixtures pass, including failure and lock cases.
+  The locally built portable test EXE passes read-only CLI/help/completion checks.
+  Tests use fake network,
+  unique Local gate objects and harmless temporary files, not live app replacement
+  or Windows Setup. Elevated ACL fixtures and true two-stable-version update
+  acceptance still require separate evidence. Do not describe this as shipped.
+
+- Implementation checkpoint `6df4cdb03b2ab900b4259cc618e7d7ce071deb3d` is committed
+  under the owner, pushed and remote-SHA verified. PR #13 remains Draft and
+  mergeable. CI run `40110660239` passed all steps, including elevated protected
+  temporary-folder/ACL/anchor/cleanup fixtures (no Program Files writes). Local
+  non-admin SKIPs above remain honest, separate from this hosted native evidence.
+  A follow-up also proves read-only inspection accepts the actual built product
+  host, preserves subcommand help, and distinguishes helper deadline from cancellation.
+- Follow-up CI `40110882263` caught an existing global two-argument help guard
+  rejecting the new three-argument updater help form. Correct only that recognized
+  help route, retain rejection of unrelated extra arguments, and add real
+  `CliRunner` regression coverage before rebuilding the final artifact.
+
+- Final runtime candidate `cf84c864d8111b20400b0577761fe15f0abb5d24` is pushed and
+  remote-SHA verified. CI [40111065195](https://github.com/JavierTorresFelendler/Windows-Upgrade-Assistant-by-PcNinja/actions/runs/40111065195)
+  passed all steps, including the real updater help route and elevated temporary
+  native filesystem fixtures. Local client GUI tests also passed independently.
+- Downloaded [test artifact 12566014956](https://github.com/JavierTorresFelendler/Windows-Upgrade-Assistant-by-PcNinja/actions/runs/40111065195/artifacts/12566014956)
+  separately; verified three files, source, tested merge
+  `c20376ce9c9544be5fe42fb24438bd5ff03fafad`, product informational version,
+  exact SHA256SUMS and 73,080,239-byte EXE size. SHA-256:
+  `b052a1f55e61215bfa97aafe21fc0a2475c8784af9dd8e618d001d5775e36da8`.
+  Authenticode is `NotSigned`, not a signed-publication claim. Downloaded EXE
+  passes actual read-only CLI/help/consent/completion checks. A real metadata-only
+  GitHub check returned normal `APP_UPDATE_NO_STABLE_RELEASE`, with no executable
+  transfer, app installation, Windows Setup or restart. This does not prove the
+  future stable download/helper/elevation/relaunch integration.
+- RC8 main/tag, local release EXE and all three remote release asset IDs/digests
+  remain unchanged. This final handoff is documentation only; the linked runtime
+  candidate remains the test reference, not a rebuilt or republished RC8.
+
+Await owner review and separately authorized disposable-VM/two-stable-version
+acceptance. Do not merge, mark ready, publish a release, replace RC8 or run an
+actual updater installation on the development PC. Media preparation #9 stays
+deferred. See [application updates](APPLICATION-UPDATES.md).
+
+### Published baseline (unchanged)
 
 - Owner reports the current test application is working well and explicitly
   requested another RC before application-update planning or implementation.
@@ -31,7 +155,7 @@ assistant's personal memory or skills installation.
 - [RC8 notes](RELEASE-RC8.md) and [verification matrix](RC8-TESTING.md) describe
   scope and remaining field cases. The owner reports stable operation, but did
   not restate a complete per-profile/source test matrix for this exact binary.
-- Application self-update (#13, design only) and media preparation (#9) remain
+- Application self-update (#13, design only at RC8 publication) and media preparation (#9) remain
   outside RC8. Updater work starts separately only after this release checkpoint.
 
 The development sections below are historical checkpoints. Their earlier
@@ -401,7 +525,7 @@ are unchanged. PR #11 CI was `39058458738`, source `f4443b7`.
 | Safe ISO copy/clean/detach | Owner explicitly deferred; keep design-only PR #9 Draft for the future EXE shipped inside customized ISOs. Do not merge/implement it as part of this pass |
 | General manual Inspect/Start validation reuse | Deferred pending reliable identity/invalidation design; no size/timestamp-only cache |
 | Mount ownership/eject-lock cleanup | Investigation open; no proven locking process or general safe-detach fix |
-| Internet application self-update | Separate owner checkpoint before first stable publication, then two increasing official versions for the live update test; no active updater/feed yet |
+| Internet application self-update | Design only in design/APPLICATION-UPDATES.md; first stable must already contain the future updater, then test a higher official version with owner participation; no active feed/updater yet |
 
 ### Latest owner field evidence
 

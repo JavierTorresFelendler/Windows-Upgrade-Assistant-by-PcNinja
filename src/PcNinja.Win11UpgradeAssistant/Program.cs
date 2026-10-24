@@ -11,6 +11,8 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
+        if (args.Length > 0 && args[0].Equals(AppUpdateInstaller.HelperArgument, StringComparison.Ordinal))
+            return args.Length == 1 ? AppUpdateInstaller.RunHelperAsync().GetAwaiter().GetResult() : 2;
         AppLog.Info($"{ProductIdentity.Name}; build {ProductIdentity.BuildVersion}; " +
             $"mode: {(args.Length > 0 ? "CLI" : "GUI")}.");
         if (args.Length > 0)

@@ -29,6 +29,21 @@ if ($status.schemaVersion -ne 1 -or $status.resultCode -ne 'STATUS_REPORTED' -or
     $status.readyForRestart -ne $false -or $status.exitCode -ne 0) { throw 'Status result could authorize a restart or lacks the automation contract.' }
 if (-not $status.build -or -not $status.build.StartsWith($ExpectedVersion)) { throw 'Build provenance missing.' }
 if (-not $help.Contains('RollbackObserved') -or -not $help.Contains('SetupFailure')) { throw 'Rollback help missing.' }
+if (-not $help.Contains('COMMAND: app-update') -or -not $help.Contains('APP_UPDATE_HANDOFF_STARTED') -or
+    -not $help.Contains('NOT running yet')) { throw 'Offline application-update contract missing.' }
+$appHelp = Invoke-Assistant @('app-update', 'run', '--help')
+if ($LastCode -ne 0 -or -not $appHelp.Contains('COMMAND: app-update')) { throw 'App-update subcommand help failed.' }
+# These updater probes MUST stay offline and stop before any installation effect.
+$appStatus = (Invoke-Assistant @('app-update', 'status', '--json')) | ConvertFrom-Json
+if ($LastCode -ne 0 -or $appStatus.resultCode -ne 'APP_UPDATE_STATUS' -or
+    $appStatus.readyForRestart -ne $false -or $appStatus.setupStarted -ne $false -or $appStatus.applicationUpdated -ne $false) {
+    throw 'App-update status lost its offline/app-only result contract.'
+}
+$appDeclined = (Invoke-Assistant @('app-update', 'run', '--json')) | ConvertFrom-Json
+if ($LastCode -ne 6 -or $appDeclined.resultCode -ne 'APP_UPDATE_CONSENT_REQUIRED' -or
+    $appDeclined.readyForRestart -ne $false -or $appDeclined.setupStarted -ne $false) {
+    throw 'App update without consent did not stop before network/install.'
+}
 if ((Get-Item -LiteralPath $exe).VersionInfo.ProductName -ne 'Windows Upgrade Assistant By PcNinja') {
     throw 'Product metadata branding mismatch.'
 }
@@ -87,6 +102,8 @@ foreach ($case in @(
     @('validate', '--mounted', 'Z:\not-used', '--quiet', '--json'),
     @('upgrade', '--quiet', '--quiet', '--yes', '--json'),
     @('status', '--image-index', '1', '--json'),
+    @('app-update', 'run', '--yes', '--download', '--json'),
+    @('app-update', 'check', '--yes', '--json'),
     @('upgrade', '--iso', 'first.iso', '--iso', 'second.iso', '--json'),
     @('upgrade', '--iso', 'not-used.iso', '--image-index', '0', '--json'),
     @('validate', '--mounted', 'Z:\not-used', '--image-index', '-1', '--json'),
@@ -104,7 +121,8 @@ if ($LastCode -ne 6 -or $quietDeclined.resultCode -ne 'CANCELLED' -or $quietDecl
     throw 'Quiet without explicit consent did not stop before transfer/Setup.'
 }
 $completion = Invoke-Assistant @('completion', 'powershell')
-if ($LastCode -ne 0 -or -not $completion.Contains('--image-index') -or -not $completion.Contains("'downloads'")) { throw 'Completion options missing.' }
+if ($LastCode -ne 0 -or -not $completion.Contains('--image-index') -or -not $completion.Contains("'downloads'") -or
+    -not $completion.Contains("'app-update'")) { throw 'Completion options missing.' }
 [scriptblock]::Create($completion) | Out-Null
 Invoke-Expression $completion
 $inputLine = "& '$($exe.Replace("'", "''"))' upgrade --image-"
@@ -116,6 +134,9 @@ if ('--quiet' -notin $quietMatches.CompletionMatches.CompletionText) { throw 'Qu
 $downloadsLine = "& '$($exe.Replace("'", "''"))' downloads --j"
 $downloadsMatches = [System.Management.Automation.CommandCompletion]::CompleteInput($downloadsLine, $downloadsLine.Length, $null)
 if ('--json' -notin $downloadsMatches.CompletionMatches.CompletionText) { throw 'Download guidance Tab completion failed.' }
+$appLine = "& '$($exe.Replace("'", "''"))' app-update ru"
+$appMatches = [System.Management.Automation.CommandCompletion]::CompleteInput($appLine, $appLine.Length, $null)
+if ('run' -notin $appMatches.CompletionMatches.CompletionText) { throw 'App-update subcommand Tab completion failed.' }
 $bytes = [IO.File]::ReadAllBytes($exe)
 $peOffset = [BitConverter]::ToInt32($bytes, 0x3c)
 if ([BitConverter]::ToUInt16($bytes, $peOffset + 24 + 68) -ne 2) { throw 'The EXE has a Console subsystem.' }

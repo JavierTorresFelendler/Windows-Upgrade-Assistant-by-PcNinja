@@ -5,7 +5,7 @@ internal static class CliHelp
     internal static string Version => ProductIdentity.Version;
 
     private static readonly string[] Topics =
-        ["status", "downloads", "scan", "validate", "upgrade", "log-path", "completion"];
+        ["status", "downloads", "scan", "validate", "upgrade", "app-update", "log-path", "completion"];
 
     public static bool TryGetRequestedTopic(string[] args, out string? topic)
     {
@@ -20,6 +20,12 @@ internal static class CliHelp
         }
 
         if (first is "--help" or "-h") return true;
+        if (first == "app-update" && args.Length == 3 &&
+            args[1].ToLowerInvariant() is "check" or "status" or "run" or "install" && args[2] is "--help" or "-h")
+        {
+            topic = first;
+            return true;
+        }
         if (args.Length == 2 && args[1] is "--help" or "-h")
         {
             topic = first;
@@ -68,6 +74,7 @@ internal static class CliHelp
         "scan" or "refresh" or "rescan" => Scan,
         "validate" => Validate,
         "upgrade" => Upgrade,
+        "app-update" => AppUpdate,
         "log-path" => LogPath,
         "completion" => Completion,
         _ => null
@@ -90,6 +97,7 @@ Commands:
   scan         Find local ISO files, mounted Windows media, and download drives.
   validate     Validate one exact ISO file or mounted Windows source.
   upgrade      Validate a source and start Windows Setup after confirmation.
+  app-update   Check or install a stable update of this application, not Windows.
   log-path     Print the application log path.
   completion   Generate shell completion code. PowerShell completion is supported.
   help         Show general help or detailed help for one command.
@@ -348,6 +356,46 @@ SHA-256 is calculated for ISO files. Supply --sha256 or PCNINJA_ISO_SHA256 to
 compare with a trusted value; a calculated hash alone is not proof of integrity.
 """;
 
+    private const string AppUpdate = """
+COMMAND: app-update
+
+Download and run a new portable assistant, NOT a Windows update or installer.
+
+Usage (substitute the exact version-named EXE you are running):
+  Windows-Upgrade-Assistant-By-PcNinja-V1.1-Beta1.exe app-update check [--json]
+  Windows-Upgrade-Assistant-By-PcNinja-V1.1-Beta1.exe app-update status [--json]
+  Windows-Upgrade-Assistant-By-PcNinja-V1.1-Beta1.exe app-update run --yes [--json]
+
+check reads only pinned GitHub release metadata/manifest. Beta executables select
+numbered Beta releases; stable/RC executables select stable only. Drafts, other
+repositories and older/equal versions are not offered. status stays offline.
+
+run requires Administrator and explicit --yes. The exact version-named EXE is
+verified and saved BESIDE THE RUNNING EXE, not the current shell directory.
+No Program Files relocation, original replacement/rename or numbered Copy N.
+An existing exact-name file is validated for reuse; a mismatch is not overwritten.
+Unsupported/read-only folders fail rather than silently choosing another location.
+The install verb remains an alias for run; no software is installed.
+
+GUI shows Regular update or Critical update, publisher summary and exact GitHub
+release notes, with Download and run the new version / Not now choices. Critical
+does NOT authorize an automatic download. CLI emits these metadata in --json.
+
+Bytes, size, SHA-256, x64 GUI/product/version and signed-publisher continuity are
+verified. Unsigned trust depends on the publishing GitHub account/manifest; a
+checksum or critical tag is not an independent digital signature.
+
+A verified helper waits for this exact parent to exit. GUI reopens the new EXE
+with no arguments; CLI never opens a GUI or replays commands. The old file stays.
+APP_UPDATE_HANDOFF_STARTED means handed off, NOT running yet. Inspect subsequent
+app-update status and the new copy's --version. readyForRestart and setupStarted
+are always false. No Windows upgrade/reboot is started.
+
+Exit groups: 0 result/handoff, 2 invalid arguments, 3 blocked, 4 check/verification/
+helper failure, 5 permission, 6 cancelled. Active Windows operations, external
+Setup or pending Windows restart block running an update; no force bypass.
+""";
+
     private const string LogPath = """
 COMMAND: log-path
 
@@ -416,7 +464,7 @@ Register-ArgumentCompleter -Native -CommandName '__EXE_NAME__', 'Windows-Upgrade
         return
     }
 
-    $commands = @('status', 'downloads', 'scan', 'validate', 'upgrade', 'log-path', 'completion', 'help', '--help', '--version')
+    $commands = @('status', 'downloads', 'scan', 'validate', 'upgrade', 'app-update', 'log-path', 'completion', 'help', '--help', '--version')
     $options = switch ($command) {
         'status'     { @('--json', '--help') }
         'downloads'  { @('--json', '--help') }
@@ -425,8 +473,9 @@ Register-ArgumentCompleter -Native -CommandName '__EXE_NAME__', 'Windows-Upgrade
         'rescan'     { @('--json', '--help') }
         'validate'   { @('--iso', '--mounted', '--sha256', '--image-index', '--json', '--help') }
         'upgrade'    { @('--iso', '--mounted', '--download', '--destination', '--sha256', '--image-index', '--no-restart', '--quiet', '--dry-run', '--yes', '--json', '--help') }
+        'app-update' { @('check', 'status', 'run', '--yes', '--json', '--help') }
         'completion' { @('powershell', '--help') }
-        'help'       { @('status', 'downloads', 'scan', 'validate', 'upgrade', 'log-path', 'completion', 'all') }
+        'help'       { @('status', 'downloads', 'scan', 'validate', 'upgrade', 'app-update', 'log-path', 'completion', 'all') }
         default      { $commands }
     }
 

@@ -73,6 +73,37 @@ In the initial workflow-preparation PR, application code and the product version
 remain RC4. Its EXE only verifies the baseline build; it does not include the RC5
 requirements tracked in the issues.
 
+### Current Beta publication exception
+
+Owner-approved Beta tags may use unmerged source ONLY after exact-source PR checks
+pass. The workflow checks that proof before building. Beta is a prerelease,
+never latest stable, with version-named EXE, manifest and regular/critical notice
+configuration. Beta 2 waits until the owner has opened/tested Beta 1. This does
+not permit stable/RC tags off main, merging PR #13 or changing existing releases.
+See [Beta acceptance](APPLICATION-UPDATES.md). The older destination/first-stable
+plan below is historical and superseded by this portable Beta trial.
+
+### Earlier application-update publication preparation
+
+Updater development lives in Draft PR #13; RC8 remains unchanged. The authoritative
+version now resides in `Directory.Build.props`. A literal `x.y.z-rc.N` still produces
+an immutable prerelease with EXE, checksums and build information. A separately
+approved literal `x.y.z` stable publication additionally includes the release-pinned
+`update-manifest.json`. No stable version or live feed is authorized merely by
+merging updater code.
+
+The release workflow first uploads to a draft, checks each asset's ID, exact byte
+count, pinned URL and digest against the final local file, then publishes. Stable
+latest is advanced only after verification and may not move backwards. A published
+release or an existing uploaded asset is never overwritten by a rerun. A partial
+draft failure requires explicit investigation; do not fix it with `--clobber`.
+
+PR CI continues to create test artifacts only. Local client GUI, elevated protected
+filesystem, real signed-binary and two-stable-version helper/rollback VM testing
+remain separate gates; a green hosted CI run is not live-update acceptance.
+
+See [application updates](APPLICATION-UPDATES.md) for CLI/results and acceptance.
+
 ## Recovery checkpoints
 
 | Checkpoint | What is preserved | Recovery without losing history |

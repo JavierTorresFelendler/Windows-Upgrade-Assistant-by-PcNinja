@@ -45,7 +45,7 @@ public sealed class UpgradeEngine
             CookieContainer = new CookieContainer()
         };
         var http = new HttpClient(handler) { Timeout = Timeout.InfiniteTimeSpan };
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("PcNinja-Win11-Upgrade-Assistant/1.1.0-rc.8");
+        http.DefaultRequestHeaders.UserAgent.ParseAdd($"PcNinja-Win11-Upgrade-Assistant/{AppUpdateIdentity.Version}");
         return http;
     }
 
@@ -258,12 +258,13 @@ public sealed class UpgradeEngine
         return Convert.ToHexString(hash.GetHashAndReset());
     }
 
-    public Task<IsoPreparationResult> PrepareIsoAsync(string path, string? expectedSha256,
+    public async Task<IsoPreparationResult> PrepareIsoAsync(string path, string? expectedSha256,
         CancellationToken token, IProgress<string>? progress = null)
     {
         try { ValidateIsoFile(path); }
         catch { _isoValidation.Invalidate(); throw; }
-        return _isoValidation.PrepareAsync(path, expectedSha256, progress, token);
+        using var operation = AppOperationGate.EnterWindows();
+        return await _isoValidation.PrepareAsync(path, expectedSha256, progress, token).ConfigureAwait(false);
     }
 
     public void InvalidateIsoValidation() => _isoValidation.Invalidate();
@@ -300,6 +301,7 @@ public sealed class UpgradeEngine
         var system = _readDownloadSystem();
         AutomaticDownloadPolicy.EnsureAvailable(system);
         var configuredSource = DownloadSourcePolicy.GetAutomaticSource(system)!;
+        using var operation = AppOperationGate.EnterWindows();
         InstallationSafety.EnsureSafe(AppContext.BaseDirectory, removeSelectedAnswerFiles: false);
         MountedSource? validatedSource = null;
         var result = await DownloadWithTransportFallbackAsync(endpoint => IsoTransfer.DownloadAsync(_http, endpoint, Path.GetFullPath(destinationDirectory),
@@ -358,6 +360,7 @@ public sealed class UpgradeEngine
     {
         isoPath = Path.GetFullPath(isoPath);
         ValidateIsoFile(isoPath);
+        using var operation = AppOperationGate.EnterWindows();
         var mount = await ResolveIsoMountAsync(isoPath, true, cancellationToken)
             ?? throw new InvalidOperationException("The selected ISO's mounted drive could not be identified.");
         return await ValidateMountedSourceAsync(mount.Root, cancellationToken, progress: progress);
@@ -417,6 +420,7 @@ public sealed class UpgradeEngine
     public async Task<MountedSource> ValidateMountedSourceAsync(string root, CancellationToken cancellationToken,
         bool removeSelectedAnswerFiles = true, IProgress<string>? progress = null)
     {
+        using var operation = AppOperationGate.EnterWindows();
         progress?.Report("Checking Microsoft signature and media safety...");
         var source = await Task.Run(() => ValidateMountedSource(root, removeSelectedAnswerFiles), cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
@@ -457,6 +461,7 @@ public sealed class UpgradeEngine
         bool allowAutomaticRestart, CancellationToken cancellationToken, Action? setupStarting = null, bool quiet = false)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        using var operation = AppOperationGate.EnterWindows();
         Directory.CreateDirectory(AppLog.Folder);
         await using var setupLock = new FileStream(Path.Combine(AppLog.Folder, "Setup-Launch.lock"),
             FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 1, FileOptions.DeleteOnClose);

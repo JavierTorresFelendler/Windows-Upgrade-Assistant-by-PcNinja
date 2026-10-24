@@ -1,0 +1,4 @@
+{
+  "importance": "normal",
+  "message": "Beta 1: test the new version notification and consent-based portable update flow. New versions are saved beside this tool. No Windows upgrade starts when updating the assistant."
+}

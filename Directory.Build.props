@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <!-- One release identity for both assemblies, updater and packaging. -->
+    <PcNinjaReleaseVersion>1.1.0-beta.1</PcNinjaReleaseVersion>
+    <PcNinjaVersionBase>$([System.Text.RegularExpressions.Regex]::Match('$(PcNinjaReleaseVersion)', '^\d+\.\d+\.\d+').Value)</PcNinjaVersionBase>
+    <PcNinjaVersionRevision>$([System.Text.RegularExpressions.Regex]::Match('$(PcNinjaReleaseVersion)', '(?&lt;=[a-z]\.)\d+$').Value)</PcNinjaVersionRevision>
+    <PcNinjaVersionRevision Condition="'$(PcNinjaVersionRevision)' == ''">0</PcNinjaVersionRevision>
+    <Version>$(PcNinjaReleaseVersion)</Version>
+    <AssemblyVersion>$(PcNinjaVersionBase).0</AssemblyVersion>
+    <FileVersion>$(PcNinjaVersionBase).$(PcNinjaVersionRevision)</FileVersion>
+    <InformationalVersion>$(PcNinjaReleaseVersion)</InformationalVersion>
+  </PropertyGroup>
+</Project>

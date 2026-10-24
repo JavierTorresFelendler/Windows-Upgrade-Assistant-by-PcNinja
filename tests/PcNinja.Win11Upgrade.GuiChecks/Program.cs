@@ -6,13 +6,18 @@ internal static class Program
     [STAThread]
     private static int Main(string[] args)
     {
-        ApplicationConfiguration.Initialize();
+        // Explicit initialization avoids the two friend assemblies' generated
+        // internal ApplicationConfiguration types colliding in this harness.
+        Application.SetHighDpiMode(HighDpiMode.SystemAware);
+        Application.EnableVisualStyles();
+        Application.SetCompatibleTextRenderingDefault(false);
         var assembly = Assembly.Load("Windows-Upgrade-Assistant-By-PcNinja");
         var type = assembly.GetType("PcNinja.Win11UpgradeAssistant.MainForm", true)!;
         using var form = (Form)Activator.CreateInstance(type, nonPublic: true)!;
         object Field(string name) => type.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(form)!;
         void SetField(string name, object? value) => type.GetField(name, BindingFlags.NonPublic | BindingFlags.Instance)!.SetValue(form, value);
         void Invoke(string name, params object[] values) => type.GetMethod(name, BindingFlags.NonPublic | BindingFlags.Instance)!.Invoke(form, values);
+        SetField("_automaticAppUpdateCheck", false);
         form.Show();
         Application.DoEvents();
         var actualLanguage = CurrentWindows.Read().Language;
@@ -286,6 +291,7 @@ internal static class Program
 
         ImageSelectionChecks.Run(form);
         DownloadGuidanceChecks.Run();
+        AppUpdateGuiChecks.Run();
 
         if (args.Length > 0)
         {

@@ -25,6 +25,10 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Offline app-update release-contract fixtures (no network or publication)
+        shell: pwsh
+        run: ./tests/Verify-AppUpdatePackaging.ps1
+
       - name: Run Core smoke tests (no Windows Setup)
         shell: pwsh
         run: |
@@ -36,6 +40,10 @@ jobs:
         run: |
           dotnet publish src/PcNinja.Win11UpgradeAssistant/PcNinja.Win11UpgradeAssistant.csproj -c Release -r win-x64 --self-contained true -o artifacts
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Import-Module ./.github/scripts/AppUpdateRelease.psm1 -Force
+          $identity = Get-PcNinjaReleaseIdentity -PropsPath Directory.Build.props
+          Move-Item -LiteralPath (Join-Path artifacts $identity.BuildExecutableName) -Destination (Join-Path artifacts $identity.AssetName) -ErrorAction Stop
+          "TEST_ASSET_NAME=$($identity.AssetName)" | Add-Content $env:GITHUB_ENV
 
       - name: Headless CLI automation result fixtures (no Setup)
         shell: pwsh
@@ -50,8 +58,9 @@ jobs:
         run: |
           dotnet build tests/PcNinja.Win11Upgrade.GuiChecks/PcNinja.Win11Upgrade.GuiChecks.csproj -c Release -warnaserror
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          [xml]$project = Get-Content src/PcNinja.Win11UpgradeAssistant/PcNinja.Win11UpgradeAssistant.csproj
-          & ./tests/Verify-Cli.ps1 -ExePath artifacts/Windows-Upgrade-Assistant-By-PcNinja.exe -ExpectedVersion $project.Project.PropertyGroup.Version
+          Import-Module ./.github/scripts/AppUpdateRelease.psm1 -Force
+          $identity = Get-PcNinjaReleaseIdentity -PropsPath Directory.Build.props
+          & ./tests/Verify-Cli.ps1 -ExePath (Join-Path artifacts $env:TEST_ASSET_NAME) -ExpectedVersion $identity.Version
 
       - name: Record provenance and checksum
         shell: pwsh
@@ -60,7 +69,7 @@ jobs:
           TESTED_COMMIT: ${{ github.sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          $exe = Get-Item -LiteralPath 'artifacts/Windows-Upgrade-Assistant-By-PcNinja.exe'
+          $exe = Get-Item -LiteralPath (Join-Path artifacts $env:TEST_ASSET_NAME)
           $hash = (Get-FileHash -LiteralPath $exe.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $($exe.Name)" | Set-Content artifacts/SHA256SUMS.txt -Encoding ascii
           @(
@@ -82,6 +91,6 @@ jobs:
           retention-days: 30
           if-no-files-found: error
           path: |
-            artifacts/Windows-Upgrade-Assistant-By-PcNinja.exe
+            artifacts/${{ env.TEST_ASSET_NAME }}
             artifacts/SHA256SUMS.txt
             artifacts/BUILD-INFO.txt

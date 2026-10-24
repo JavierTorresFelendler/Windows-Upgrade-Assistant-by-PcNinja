@@ -14,10 +14,6 @@
     <Authors>PcNinja</Authors>
     <Description>Standalone Windows upgrade assistant for advanced home users.</Description>
     <Copyright>Copyright © 2026 PcNinja</Copyright>
-    <Version>1.1.0-rc.8</Version>
-    <AssemblyVersion>1.1.0.0</AssemblyVersion>
-    <FileVersion>1.1.0.8</FileVersion>
-    <InformationalVersion>1.1.0-rc.8</InformationalVersion>
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <SelfContained>true</SelfContained>

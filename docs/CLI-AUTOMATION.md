@@ -1,7 +1,8 @@
 # Quiet Setup and remote automation results
 
-Included in RC8. This documents the shared quiet Setup and remote result contract;
-it does not implement application self-update or agent-controlled restart code.
+The quiet Setup/result contract is included in RC8. Application-update results
+below apply only to development Draft PR #13, not the unchanged RC8 binary.
+Neither interface implements agent-controlled restart code.
 
 ## Invocation
 
@@ -64,6 +65,7 @@ opens a fallback browser or waits for a hidden interactive YES prompt.
 | 0 | UPGRADE_PREPARED_RESTART_REQUIRED | Preparation completed; readyForRestart=true; controller can schedule restart |
 | 0 | UPGRADE_PREPARED_AUTOMATIC_RESTART | Windows handles restart; readyForRestart=false |
 | 0 | VALIDATION_PASSED / DRY_RUN_COMPLETED / STATUS_REPORTED / SOURCES_SCANNED | No restart authorization |
+| 0 | DOWNLOAD_RECOMMENDATION / APP_UPDATE_* | Guidance/app-only result; never restart authorization |
 | 1 | UNEXPECTED_ERROR | Record details; do not restart |
 | 2 | INVALID_ARGUMENTS | Correct invocation; do not restart |
 | 3 | VALIDATION_FAILED | Resolve source/system/storage blocker; do not restart |
@@ -97,5 +99,26 @@ that the OS migration will succeed after reboot. `/noreboot` suppresses only the
 first reboot; Windows can restart again during subsequent installation phases.
 Windows 11 retains `/eula accept`; Windows 10 does not gain that unsupported flag.
 All edition/language/index/space/signature/unsafe-media checks remain in Core.
+
+## Application-update automation (Beta trial)
+
+Use app-update check/status/run, never upgrade, to update the portable tool.
+check reads metadata only; status stays offline. Explicit elevated
+`app-update run --yes --json` consents to transfer/staging, not Windows actions.
+The unreleased install verb remains an alias. CLI never opens a GUI/browser,
+replays upgrade arguments or asks for hidden input.
+
+New version-named EXEs stay beside the current EXE; no Program Files relocation,
+original overwrite/rename or numbered copies. An existing exact file is verified
+for reuse; unsafe/mismatched locations fail rather than silently relocating.
+Beta and stable channels remain isolated. JSON release includes importance,
+message and exact GitHub notes URL. Critical never grants implicit consent.
+
+Capture stdout and process exit through a pipeline. APP_UPDATE_HANDOFF_STARTED
+means helper handoff, not successful run: correlate subsequent operationId/local
+status and actual new EXE --version. Every updater result retains
+applicationUpdated=false, setupStarted=false and readyForRestart=false. An
+updater result never authorizes an OS restart. Agent/live helper acceptance is
+distinct from mocks/CI. See [application updates](APPLICATION-UPDATES.md).
 
 Reference: [Microsoft Windows Setup options: Quiet, NoReboot and EULA](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/windows-setup-command-line-options).

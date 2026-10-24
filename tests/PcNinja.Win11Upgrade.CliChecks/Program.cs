@@ -2,6 +2,9 @@ using System.Reflection;
 using System.Text.Json;
 using PcNinja.Win11Upgrade.Core;
 
+await AppUpdateCliChecks.RunAsync();
+AppUpdateHelperChecks.Run();
+
 var assembly = Assembly.Load("Windows-Upgrade-Assistant-By-PcNinja");
 var runner = assembly.GetType("PcNinja.Win11UpgradeAssistant.CliRunner", true)!;
 var options = assembly.GetType("PcNinja.Win11UpgradeAssistant.CliOptions", true)!;

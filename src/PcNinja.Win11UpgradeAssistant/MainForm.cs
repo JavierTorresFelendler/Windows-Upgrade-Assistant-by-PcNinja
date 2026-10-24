@@ -7,7 +7,7 @@ using PcNinja.Win11Upgrade.Core;
 
 namespace PcNinja.Win11UpgradeAssistant;
 
-internal sealed class MainForm : Form
+internal sealed partial class MainForm : Form
 {
     // Nocturne design tokens adapted from the PcNinja dashboard handoff.
     private static readonly Color Background = Color.FromArgb(22, 24, 38);
@@ -97,9 +97,11 @@ internal sealed class MainForm : Form
         _resolveDownloadRecommendation = token => _engine.GetDownloadRecommendationAsync(token);
         _prepareServerCommand = (source, index, token) => _engine.GetManualServerCommandAsync(source, index, token);
         BuildUi();
-        Shown += (_, _) => RefreshSources(true);
+        Shown += async (_, _) => { RefreshSources(true); if (_automaticAppUpdateCheck) await CheckAppUpdatesAsync(false); };
+        FormClosed += (_, _) => { _appUpdateCheck?.Cancel(); _applicationUpdates.Dispose(); };
         FormClosing += (_, e) =>
         {
+            if (_closingForAppUpdate) return;
             if (_operation is null) return;
             e.Cancel = true;
             _status.Text = _setupHasStarted ? "Windows Setup is running. Please wait."
@@ -550,6 +552,18 @@ internal sealed class MainForm : Form
         _details.LinkClicked += (_, _) => MessageBox.Show(this, _lastErrorDetails ?? "No details available.",
             "Details", MessageBoxButtons.OK, MessageBoxIcon.Information);
         links.Controls.Add(_details);
+        _appUpdatesLink.AutoSize = true;
+        _appUpdatesLink.Text = "Check app updates";
+        _appUpdatesLink.LinkColor = AccentLight;
+        _appUpdatesLink.ActiveLinkColor = Accent;
+        _appUpdatesLink.Margin = new Padding(0, 3, 14, 0);
+        _appUpdatesLink.LinkClicked += async (_, _) =>
+        {
+            if (_operation is not null) return;
+            if (_availableAppUpdate is null) await CheckAppUpdatesAsync(true);
+            else await InstallAppUpdateAsync();
+        };
+        links.Controls.Add(_appUpdatesLink);
         links.Controls.Add(footer);
         bar.Controls.Add(links, 1, 0);
         return bar;
@@ -1148,6 +1162,8 @@ internal sealed class MainForm : Form
 
     private void SetBusy(bool busy)
     {
+        if (busy) _appUpdateCheck?.Cancel();
+        _appUpdatesLink.Enabled = !busy;
         if (!busy) { StyleGoButton(_start, _downloadSystem.IsServer ? "MANUAL GUIDANCE ONLY" : "START UPGRADE"); _start.Enabled = _upgradeAllowed; }
         else if (_setupHasStarted) { StyleRunningButton(_start, "SETUP RUNNING"); _start.Enabled = false; }
         else { StyleCancelButton(_start, "CANCEL"); _start.Enabled = true; }

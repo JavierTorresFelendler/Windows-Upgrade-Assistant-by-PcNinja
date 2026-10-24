@@ -2,6 +2,8 @@
 
 RC8 includes [quiet Setup and remote automation results](CLI-AUTOMATION.md),
 with explicit consent, machine-readable outcomes and independent restart control.
+The `app-update` commands below exist only in development Draft PR #13, not the
+unchanged published RC8 binary. No new version/tag/release is created by this work.
 
 The graphical interface opens when the EXE is started without arguments. The
 same standalone EXE becomes a command-line tool when a command is supplied.
@@ -25,6 +27,8 @@ See [outcome diagnostics](SETUP-OUTCOME-DIAGNOSTICS.md) for correlation limits.
 `status`, `downloads`, `scan`, `--help`, `--version`, and `log-path` can run normally.
 Commands that mount or validate installation media, download and mount an ISO,
 or start Windows Setup must run from an elevated Command Prompt or PowerShell.
+Development `app-update check` and `app-update status` need no elevation;
+`app-update install` requires elevation and explicit `--yes`, without UAC relaunch.
 
 ## Built-in help and PowerShell completion
 
@@ -48,6 +52,46 @@ Completion covers commands, options relevant to the selected command, mounted
 drives, extracted folders, ISO paths, and destination directories. The EXE
 does not modify `$PROFILE`; run `help completion` before adding the generated
 script to a persistent profile.
+
+## Application updates (Beta trial)
+
+Read [portable updates and live Beta acceptance](APPLICATION-UPDATES.md). Published
+RC8 has no updater. Substitute the exact version-named EXE being used:
+
+```powershell
+.\Windows-Upgrade-Assistant-By-PcNinja-V1.1-Beta1.exe help app-update
+.\Windows-Upgrade-Assistant-By-PcNinja-V1.1-Beta1.exe app-update check --json
+.\Windows-Upgrade-Assistant-By-PcNinja-V1.1-Beta1.exe app-update status --json
+# Explicit elevated consent to download/verify and stage a later version:
+.\Windows-Upgrade-Assistant-By-PcNinja-V1.1-Beta1.exe app-update run --yes --json
+```
+
+check is metadata only, status is offline. Beta discovers Beta only; stable/RC
+discovers stable only. Returned release metadata includes importance, message and
+the exact GitHub release-notes URL. Critical does not imply download consent.
+
+New version-named files stay beside the RUNNING EXE, not the caller's CWD.
+The old file is unchanged. There is no Program Files fallback, overwrite/rename
+or Copy N. Existing exact files are verified for reuse, not replaced on mismatch.
+run needs Administrator and --yes, never UAC-relaunches or opens a GUI/browser.
+The unreleased install verb remains an alias only.
+
+APP_UPDATE_HANDOFF_STARTED means verified helper handoff, not completed running.
+Inspect later local status, operationId and the new EXE version. Every app-update
+result keeps applicationUpdated=false/setupStarted=false/readyForRestart=false.
+No EXE's update result authorizes restarting Windows.
+
+| Exit | Result codes |
+| ---: | --- |
+| 0 | APP_UPDATE_AVAILABLE, APP_UPDATE_CURRENT, APP_UPDATE_NO_STABLE_RELEASE, APP_UPDATE_NO_BETA_RELEASE, APP_UPDATE_STATUS, APP_UPDATE_HANDOFF_STARTED |
+| 2 | INVALID_ARGUMENTS |
+| 3 | APP_UPDATE_BLOCKED |
+| 4 | APP_UPDATE_CHECK_UNAVAILABLE, APP_UPDATE_FAILED |
+| 5 | ADMINISTRATOR_REQUIRED, APP_UPDATE_PERMISSION_DENIED |
+| 6 | APP_UPDATE_CONSENT_REQUIRED, APP_UPDATE_CANCELLED |
+
+No arbitrary feed/destination switches, Setup/restart bypass or unsigned-publisher
+guarantee is offered. See the guide for local NTFS/staging/signing limitations.
 
 ## Inspect the computer and available sources
 
@@ -318,8 +362,8 @@ start "" /wait Windows-Upgrade-Assistant-By-PcNinja.exe status --json
 | 0 | Success |
 | 1 | Unexpected error |
 | 2 | Invalid arguments |
-| 3 | Validation, unsupported system, or storage failure |
-| 4 | Automatic download failure |
+| 3 | Validation, unsupported system/storage failure, or app-update blocker |
+| 4 | Download or app-update check/verification/helper failure |
 | 5 | Administrator permission required |
 | 6 | Confirmation or preparation cancelled |
 | 7 | Windows Setup returned a failure code |
@@ -327,8 +371,8 @@ start "" /wait Windows-Upgrade-Assistant-By-PcNinja.exe status --json
 
 The assistant never calls `shutdown.exe`. `--no-restart` adds `/noreboot` to
 Windows Setup, and a failed Setup process does not trigger a forced restart.
-After exit 0 with `--no-restart`, the CLI explicitly says to restart manually to
-continue the upgrade. Successful upgrade JSON includes `manualRestartRequired`
+After a successful actual `upgrade` with `--no-restart`, the CLI explicitly says
+to restart manually to continue the upgrade. Successful upgrade JSON includes `manualRestartRequired`
 (`true` with `--no-restart`, otherwise `false`); existing exit codes are unchanged.
 `/noreboot` suppresses the first post-preparation reboot, not later Setup reboots
 after the user manually restarts. PreparationCompleted is not final OS success.

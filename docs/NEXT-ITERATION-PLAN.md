@@ -22,7 +22,7 @@ later upgrades do not establish their original root causes or resolve every case
 | 2 | Automatic-flow and diagnostics PR #10 | Merged after CI and owner feedback; add a separate small manual-restart explanation follow-up without changing Setup launch |
 | 3 | A separate target-aware Windows 10 / same-version POC PR | In development: by explicit owner request, recognize Windows 10 and switch command without intra-Windows-10 build-order checks; let Setup decide migration; manual media and VM tests only, no clean fallback |
 | Deferred | Design PR #9 safe-media preparation | Owner explicitly postponed this for the future in-ISO EXE; keep Draft, no runtime change or merge in the current pass |
-| 5 | A separate application self-update PR | Versioned release manifest, verified portable download, channel separation, no update during active upgrade; failure preserves old EXE |
+| 5 | Application self-update design | Proposed in design/APPLICATION-UPDATES.md; no runtime/feed/release change. Implementation and live version-pair test require their own owner checkpoint |
 
 Do not wait for every future feature to merge a useful tested improvement. Each
 runtime PR gets CI and a commit-identified test EXE; changed upgrade flows need
@@ -102,6 +102,12 @@ fixtures together in Core-driven operations. Automatic download remains the
 configured Windows 11 en-US source; adding a Windows 10 catalog is separate work.
 
 ## Application self-update (separate from OS upgrade)
+
+The owner requested planning, not activation while PR #12 is under test. See
+[the scoped design and two-stable-release acceptance plan](design/APPLICATION-UPDATES.md).
+The first official version must already include the future updater; only then
+can it be tested against a higher official version. Version numbers in the design
+are examples, not approved tags. No live manifest or release workflow is changed.
 
 - Reuse the existing PcNinja release-manifest approach, adapted for this .NET
   portable product; do not copy MSI replacement behavior into a portable EXE.

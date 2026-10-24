@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.1.0-beta.1 — application update trial
+
+- Replace the unshipped Program Files/in-place updater design with version-named
+  EXEs beside the running tool. Preserve the original; never overwrite a collision
+  or create Copy N. Reuse only an exact verified existing version.
+- Isolate numbered Beta discovery from stable/RC. Metadata checks do not download
+  an EXE; GUI Download and run the new version / Not now and CLI run --yes govern it.
+- Add Regular/Critical badges, bounded publisher messages and exact GitHub notes.
+  Critical is advisory, not forced download. Release notice is version-controlled.
+- Keep private same-folder staging, signed-publisher continuity, parent-bound
+  protocol-v2 helper, machine-wide Windows-operation exclusion and launch byte locks.
+- Publish only Beta 1 after exact CI verification. Beta 2 waits for owner testing;
+  RC8/main/older releases remain unchanged. No stable publication or live Windows
+  upgrade is part of this trial.
+
+## Unreleased - application updates (Draft PR #13)
+
+- Add stable-only, product/repository-pinned GitHub application-update discovery,
+  explicit GUI consent and `app-update check|status|install` CLI/JSON. This updates
+  the assistant, never Windows; all updater results deny restart authorization.
+- Verify exact pinned release bytes, size, SHA-256 and EXE identity. Use private
+  fixed-local-NTFS staging, a machine-wide Windows/app-operation gate and a
+  revalidating helper for recoverable Program Files portable-copy installation.
+  An original outside the protected destination remains unchanged; CLI does not
+  relaunch a GUI or replay upgrade arguments. Unsigned trust limitations remain.
+- Centralize build identity in `Directory.Build.props`; add fail-closed future
+  stable manifest/publication support with draft-first verified immutable assets
+  and latest-last publication. RCs retain three assets/prerelease/no manifest.
+- Add safe HTTP/CLI/GUI/operation/path/packaging fixtures and updater guides.
+  Development source only: no new version/tag/release or replacement RC8 asset.
+  End-to-end two-stable-version disposable-VM acceptance is still pending.
+
 ## 1.1.0-rc.8 - 2026-10-24
 
 - Prefer the configured owner ISO for eleven matching en-US/x64 client editions;
